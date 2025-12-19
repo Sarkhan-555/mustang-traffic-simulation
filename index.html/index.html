@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ağıllı İşıqfor Simulyasiyası</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            perspective: 1500px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.5),
+                inset 0 -5px 20px rgba(0, 0, 0, 0.1);
+            max-width: 1400px;
+            width: 100%;
+            transform: rotateX(2deg);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: rotateX(2deg) translateY(0px); }
+            50% { transform: rotateX(2deg) translateY(-10px); }
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2.5fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* İşıqfor - 3D */
+        .traffic-light-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.3));
+        }
+
+        .traffic-light {
+            background: linear-gradient(145deg, #1a1a1a, #2c2c2c);
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 
+                0 15px 40px rgba(0, 0, 0, 0.5),
+                inset 0 2px 5px rgba(255, 255, 255, 0.1);
+            border: 3px solid #3a3a3a;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .traffic-light::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border-radius: 10px;
+        }
+
+        .light {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            margin: 18px;
+            transition: all 0.4s ease;
+            box-shadow: 
+                inset 0 8px 20px rgba(0, 0, 0, 0.5),
+                0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            transform: translateZ(10px);
+        }
+
+        .light::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 30%;
+            height: 30%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            filter: blur(5px);
+        }
+
+        .light.red {
+            background: radial-gradient(circle at 30% 30%, #6a0f0f, #2a0505);
+        }
+
+        .light.red.active {
+            background: radial-gradient(circle at 30% 30%, #ff4444, #cc0000);
+            box-shadow: 
+                0 0 40px #ff0000,
+                0 0 80px #ff0000,
+                inset 0 0 30px #ff6666;
+            animation: pulse-red 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 40px #ff0000, 0 0 80px #ff0000; }
+            50% { box-shadow: 0 0 60px #ff0000, 0 0 120px #ff0000; }
+        }
+
+        .light.yellow {
+            background: radial-gradient(circle at 30% 30%, #6a5a0f, #2a2205);
+        }
+
+        .light.yellow.active {
+            background: radial-gradient(circle at 30% 30%, #ffff44, #cccc00);
+            box-shadow: 
+                0 0 40px #ffff00,
+                0 0 80px #ffff00,
+                inset 0 0 30px #ffff99;
+            animation: pulse-yellow 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-yellow {
+            0%, 100% { box-shadow: 0 0 40px #ffff00, 0 0 80px #ffff00; }
+            50% { box-shadow: 0 0 60px #ffff00, 0 0 120px #ffff00; }
+        }
+
+        .light.green {
+            background: radial-gradient(circle at 30% 30%, #0f6a0f, #052a05);
+        }
+
+        .light.green.active {
+            background: radial-gradient(circle at 30% 30%, #44ff44, #00cc00);
+            box-shadow: 
+                0 0 40px #00ff00,
+                0 0 80px #00ff00,
+                inset 0 0 30px #66ff66;
+            animation: pulse-green 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 40px #00ff00, 0 0 80px #00ff00; }
+            50% { box-shadow: 0 0 60px #00ff00, 0 0 120px #00ff00; }
+        }
+
+        /* Yol simulyasiyası - 3D */
+        .road-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .road-wrapper {
+            perspective: 1000px;
+        }
+
+        .road {
+            background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+            height: 180px;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 10px 30px rgba(0, 0, 0, 0.5),
+                0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: rotateX(15deg) translateZ(0);
+            border: 3px solid #3a3a3a;
+        }
+
+        .road::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent);
+        }
+
+        .road::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent);
+        }
+
+        .road-line {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 5px;
+            background: repeating-linear-gradient(
+                to right,
+                #ffcc00 0px,
+                #ffcc00 40px,
+                transparent 40px,
+                transparent 80px
+            );
+            box-shadow: 0 2px 10px rgba(255, 204, 0, 0.5);
+        }
+
+        .car {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%) scale(1);
+            left: -150px;
+            width: 120px;
+            height: 60px;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+            transition: none;
+            z-index: 1;
+        }
+
+        .car.moving {
+            transition: left 3s linear, transform 3s ease;
+        }
+
+        /* Ford Mustang Detallı SVG */
+        .mustang-body {
+            fill: url(#mustangGradient);
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
+        }
+
+        .mustang-window {
+            fill: url(#windowGradient);
+        }
+
+        .mustang-wheel {
+            fill: #1a1a1a;
+            stroke: #4a4a4a;
+            stroke-width: 1.5;
+        }
+
+        .mustang-rim {
+            fill: #888888;
+        }
+
+        .mustang-headlight {
+            fill: #ffeb3b;
+            filter: drop-shadow(0 0 5px #ffeb3b);
+        }
+
+        .mustang-grille {
+            fill: #2a2a2a;
+        }
+
+        .mustang-stripe {
+            fill: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Control Panel - 3D */
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .detect-button {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 20px 35px;
+            font-size: 1.3em;
+            font-weight: 700;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 10px 25px rgba(102, 126, 234, 0.5),
+                inset 0 -3px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(0);
+        }
+
+        .detect-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .detect-button:hover {
+            transform: translateY(-3px) translateZ(10px);
+            box-shadow: 
+                0 15px 35px rgba(102, 126, 234, 0.7),
+                inset 0 -3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .detect-button:active {
+            transform: translateY(0) translateZ(0);
+        }
+
+        .detect-button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        /* Status Panel - 3D */
+        .status-panel {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.2),
+                inset 0 1px 3px rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .status-panel h3 {
+            text-align: center;
+            color: #333;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(145deg, #ffffff, #f5f5f5);
+            border-radius: 12px;
+            box-shadow: 
+                0 5px 15px rgba(0, 0, 0, 0.1),
+                inset 0 1px 2px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 1.05em;
+        }
+
+        .status-value {
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.4em;
+        }
+
+        .info-box {
+            background: linear-gradient(145deg, #e3f2fd, #bbdefb);
+            border-left: 5px solid #2196f3;
+            padding: 18px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.95em;
+            color: #555;
+            line-height: 1.8;
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.2);
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                perspective: none;
+            }
+            
+            .container {
+                transform: none;
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚦 AĞILLI İŞIQFOR SİMULYASİYASI</h1>
+        <p class="subtitle">Arduino əsaslı alqoritm ilə dinamik yaşıl işıq idarəetməsi | 3D Professional Edition</p>
+        
+        <div class="main-content">
+            <!-- Sol panel: İşıqfor -->
+            <div class="traffic-light-container">
+                <div class="traffic-light">
+                    <div class="light red" id="redLight"></div>
+                    <div class="light yellow" id="yellowLight"></div>
+                    <div class="light green" id="greenLight"></div>
+                </div>
+            </div>
+
+            <!-- Orta panel: Yol simulyasiyası -->
+            <div class="road-container">
+                <div class="road-wrapper">
+                    <div class="road" id="road">
+                        <div class="road-line"></div>
+                    </div>
+                </div>
+
+                <div class="control-panel">
+                    <button class="detect-button" id="detectBtn">🚗 Maşın Göndər</button>
+                    
+                    <div class="info-box">
+                        <strong>📷 Kamera Simulyasiyası:</strong><br>
+                        Real kamera əvəzinə hadisə-əsaslı simulyasiya istifadə olunmuşdur. 
+                        Hər düymə klikləmə kameranın bir avtomobili aşkar etməsini təmsil edir. 
+                        Sistem paralel olaraq sınırsız sayda avtomobili izləyir və hər biri 
+                        müstəqil şəkildə yoldan keçir.
+                        <br><br>
+                        <strong>
+                        </code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sağ panel: Status -->
+            <div class="status-panel">
+                <h3>📊 Real-Time Status</h3>
+                
+                <div class="status-item">
+                    <span class="status-label">Avtomobil sayı:</span>
+                    <span class="status-value" id="carCount">0</span>
+                </div>
+                
+                <div class="status-item">
+                    <span class="status-label">Qalan vaxt:</span>
+                    <span class="status-value" id="timeLeft">5s</span>
+                </div>
+                
+                <div class="status-item">
+                    <span class="status-label">Yaşıl müddət:</span>
+                    <span class="status-value" id="greenDuration">3s</span>
+                </div>
+                
+                <div class="status-item">
+                    <span class="status-label">İşıq vəziyyəti:</span>
+                    <span class="status-value" id="lightState">GREEN</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Ağıllı İşıqfor Alqoritmi
+        // Arduino simulyasiyası - Sliding Window
+        // Multiple Cars Support - Paralel sistem
+        // ============================================
+
+        // FSM (Finite State Machine) vəziyyətləri
+        const State = {
+            GREEN: 'GREEN',
+            YELLOW: 'YELLOW',
+            RED: 'RED'
+        };
+
+        // Qlobal dəyişənlər
+        let carCount = 0;                    // 5 saniyəlik pəncərədə avtomobil sayı
+        let windowStartTime = Date.now();   // Sliding window başlanğıc vaxtı
+        let currentState = State.GREEN;     // Cari işıqfor vəziyyəti
+        let greenDuration = 3000;           // Yaşıl işıq müddəti (ms)
+        let stateTimer = null;              // State keçid taymerı
+        let windowTimer = null;             // Window sayğac taymerı
+        let carIdCounter = 0;               // Hər avtomobil üçün unikal ID
+
+        // DOM elementləri
+        const redLight = document.getElementById('redLight');
+        const yellowLight = document.getElementById('yellowLight');
+        const greenLight = document.getElementById('greenLight');
+        const detectBtn = document.getElementById('detectBtn');
+        const road = document.getElementById('road');
+        const carCountDisplay = document.getElementById('carCount');
+        const timeLeftDisplay = document.getElementById('timeLeft');
+        const greenDurationDisplay = document.getElementById('greenDuration');
+        const lightStateDisplay = document.getElementById('lightState');
+
+        // Maşın şəkli (JPG/PNG)
+        // VS Code-da pictures qovluğundan mustang.jpg faylı
+        
+        
+        const mustangHTML = `
+            <img src="../pictures/mustang.png" alt="Car" style="width: 100%; height: 100%; object-fit: contain;" />
+        `;
+
+        // ============================================
+        // Çoxlu avtomobil yaratma və idarəetmə
+        // ============================================
+        function createCar() {
+            carIdCounter++;
+            const carElement = document.createElement('div');
+            carElement.className = 'car';
+            carElement.id = `car-${carIdCounter}`;
+            carElement.innerHTML = mustangHTML;
+            
+            // Random Y pozisiyası (yolda)
+            const randomY = 45 + (Math.random() * 10);
+            carElement.style.top = randomY + '%';
+            
+            road.appendChild(carElement);
+            
+            // Animasiyanı başlat
+            setTimeout(() => {
+                carElement.classList.add('moving');
+                carElement.style.left = 'calc(100% + 150px)';
+            }, 50);
+            
+            // Avtomobili təmizlə (3.5 saniyə sonra)
+            setTimeout(() => {
+                if (carElement.parentNode) {
+                    road.removeChild(carElement);
+                }
+            }, 3500);
+        }
+
+        // ============================================
+        // Kamera simulyasiyası - Event-based detection
+        // Paralel avtomobil dəstəyi
+        // ============================================
+        detectBtn.addEventListener('click', () => {
+            detectCar();
+            createCar();
+        });
+
+        // Avtomobil aşkarlama funksiyası
+        function detectCar() {
+            const currentTime = Date.now();
+            const elapsedTime = currentTime - windowStartTime;
+
+            // 5 saniyəlik pəncərə içindəsə sayğacı artır
+            if (elapsedTime < 5000) {
+                carCount++;
+                updateDisplay();
+            }
+        }
+
+        // ============================================
+        // Sliding Time Window - 5 saniyəlik interval
+        // ============================================
+        function startWindowTimer() {
+            windowTimer = setInterval(() => {
+                const currentTime = Date.now();
+                const elapsedTime = currentTime - windowStartTime;
+                const timeLeft = Math.max(0, Math.ceil((5000 - elapsedTime) / 1000));
+
+                timeLeftDisplay.textContent = timeLeft + 's';
+
+                // 5 saniyə tamam olduqda
+                if (elapsedTime >= 5000) {
+                    evaluateTraffic();
+                    resetWindow();
+                }
+            }, 100);
+        }
+
+        // Trafik vəziyyətini qiymətləndir
+        function evaluateTraffic() {
+            // Alqoritmik qərar: 3+ avtomobil → 10s, az olarsa → 3s
+            if (carCount >= 3) {
+                greenDuration = 10000; // 10 saniyə
+                greenDurationDisplay.textContent = '10s';
+            } else {
+                greenDuration = 3000;  // 3 saniyə
+                greenDurationDisplay.textContent = '3s';
+            }
+        }
+
+        // Window sıfırlama
+        function resetWindow() {
+            carCount = 0;
+            windowStartTime = Date.now();
+            updateDisplay();
+        }
+
+        // ============================================
+        // FSM - İşıqfor vəziyyət idarəetməsi
+        // ============================================
+        function changeState(newState) {
+            currentState = newState;
+            updateLights();
+            lightStateDisplay.textContent = currentState;
+
+            // State-ə görə növbəti keçid
+            clearTimeout(stateTimer);
+
+            switch(currentState) {
+                case State.GREEN:
+                    stateTimer = setTimeout(() => {
+                        changeState(State.YELLOW);
+                    }, greenDuration);
+                    break;
+                
+                case State.YELLOW:
+                    stateTimer = setTimeout(() => {
+                        changeState(State.RED);
+                    }, 2000); // 2 saniyə
+                    break;
+                
+                case State.RED:
+                    stateTimer = setTimeout(() => {
+                        changeState(State.GREEN);
+                    }, 3000); // 3 saniyə
+                    break;
+            }
+        }
+
+        // İşıqları yenilə
+        function updateLights() {
+            redLight.classList.remove('active');
+            yellowLight.classList.remove('active');
+            greenLight.classList.remove('active');
+
+            switch(currentState) {
+                case State.RED:
+                    redLight.classList.add('active');
+                    break;
+                case State.YELLOW:
+                    yellowLight.classList.add('active');
+                    break;
+                case State.GREEN:
+                    greenLight.classList.add('active');
+                    break;
+            }
+        }
+
+        // ============================================
+        // Display yeniləmə
+        // ============================================
+        function updateDisplay() {
+            carCountDisplay.textContent = carCount;
+        }
+
+        // ============================================
+        // Sistem başlanğıcı
+        // ============================================
+        function init() {
+            changeState(State.GREEN);
+            startWindowTimer();
+            updateDisplay();
+        }
+
+        // Başlat
+        init();
+    </script>
+</body>
+</html>
